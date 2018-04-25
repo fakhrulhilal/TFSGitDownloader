@@ -1,0 +1,47 @@
+{
+    "manifestVersion": 1,
+    "id": "GitDownloader",
+    "name": "Git Repository Downloader",
+    "version": "0.2.8",
+    "publisher": "fakhrulhilal-maktum",
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],    
+    "description": "Download additional git repository from public repository or this TFS",
+    "categories": [
+        "Build and release"
+    ],
+    "tags": [
+        "build",
+        "git"
+    ],
+    "icons": {
+        "default": "images/logo.png"        
+    },
+    "content": {
+        "details": { "path": "README.md"}
+    },
+    "files": [
+        {
+            "path": "GitDownloader"
+        },
+        {
+            "path": "images",
+            "addressable": true
+        }
+    ],
+    "contributions": [
+        {
+            "id": "git-downloader",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "GitDownloader"
+            }
+        }
+    ]
+}
