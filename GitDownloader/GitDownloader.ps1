@@ -88,7 +88,7 @@ Function Update-GitRepository {
     If ($CurrentBranch -ine $BranchTag) {
         Write-Host "Undoing any pending changes in $Path"
         Invoke-VerboseCommand -Command {
-            git checkout "$BranchTag"
+            git checkout $BranchTag
             git checkout -- .
             git clean -fdx
         }
@@ -98,10 +98,10 @@ Function Update-GitRepository {
     # try to use token provided by TFS server
     If (Test-SameTfsServer -Uri $Uri) {
         $AuthHeader = "Authorization: bearer $($Env:SYSTEM_ACCESSTOKEN)"
-        Invoke-VerboseCommand -Command { git -c http.extraheader="$AuthHeader" pull origin "$BranchTag" }
+        Invoke-VerboseCommand -Command { git -c http.extraheader="$AuthHeader" pull origin $BranchTag }
     }
     Else {
-        Invoke-VerboseCommand -Command { git pull origin "$BranchTag" }
+        Invoke-VerboseCommand -Command { git pull origin $BranchTag }
     }
 }
 
@@ -113,25 +113,17 @@ Function Start-CloneGitRepository {
     )
 
     Write-Host "Cloning $Uri for branch/tag '$BranchTag' into $Path"
-    New-Item -Path $Path -ItemType Directory -Force | Out-Null
-    Set-Location -Path $Path | Out-Null
-    Invoke-VerboseCommand -Command {
-        git init "$Path"
-        git config credential.interactive never
-        git remote add origin "$Uri"
-    }
     # try to embed authentication from system token for same TFS server
     If ((Test-SameTfsServer -Uri $Uri)) {
         $AuthHeader = "Authorization: bearer $($Env:SYSTEM_ACCESSTOKEN)"
-        Invoke-VerboseCommand -Command { git -c http.extraheader="$AuthHeader" fetch --progress --prune origin "$BranchTag" }
+        Invoke-VerboseCommand -Command { git -c http.extraheader="$AuthHeader" clone --single-branch --progress -b $BranchTag "$Uri" "$Path" }
     }
     Else {
-        Invoke-VerboseCommand -Command { git fetch --progress --prune origin "$BranchTag" }
+        Invoke-VerboseCommand -Command { git clone --single-branch --progress -b $BranchTag "$Uri" "$Path" }
     }
     If ($LastExitCode -ne 0) {
         Write-Error $output -ErrorAction Stop
     }
-    Invoke-VerboseCommand -Command { git checkout --progress --force "$BranchTag" }
 }
 
 Function Get-GitRepositoryUri {
