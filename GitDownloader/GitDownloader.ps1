@@ -93,10 +93,14 @@ Function Update-GitRepository {
             git clean -fdx
         }
     }
+    # get current fetch uri
+    $remoteUris = git remote -v
+    $match = [regex]::Match($remoteUris, '^(origin)\s(?<url>.+)\s\(fetch\)\W')
+    $fetchUri = $match.Groups['url'].Value
     Write-Host "Pulling update from branch/tag $BranchTag"
     Invoke-VerboseCommand -Command { git config credential.interactive never }
     # try to use token provided by TFS server
-    If (Test-SameTfsServer -Uri $Uri) {
+    If (Test-SameTfsServer -Uri $fetchUri) {
         $AuthHeader = "Authorization: bearer $($Env:SYSTEM_ACCESSTOKEN)"
         Invoke-VerboseCommand -Command { git -c http.extraheader="$AuthHeader" pull origin $BranchTag }
     }

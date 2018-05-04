@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "GitDownloader",
     "name": "Git Repository Downloader",
-    "version": "0.2.11",
+    "version": "0.2.12",
     "publisher": "fakhrulhilal-maktum",
     "targets": [
         {
@@ -10,6 +10,9 @@
         }
     ],    
     "description": "Download additional git repository from public repository or this TFS",
+    "galleryFlags": [
+        "Public"
+    ],
     "categories": [
         "Build and release"
     ],
@@ -21,7 +24,12 @@
         "default": "images/logo.png"        
     },
     "content": {
-        "details": { "path": "README.md"}
+        "details": { 
+            "path": "README.md"
+        },
+        "license": {
+            "path": "LICENSE"
+        }
     },
     "files": [
         {
@@ -43,5 +51,23 @@
                 "name": "GitDownloader"
             }
         }
-    ]
+    ],
+    "links": {
+        "learn": {
+            "uri": "https://github.com/fakhrulhilal/TFSGitDownloader/blob/master/README.md"
+        },
+        "repository": {
+            "uri": "https://github.com/fakhrulhilal/TFSGitDownloader.git"
+        },
+        "license": {
+            "uri": "https://github.com/fakhrulhilal/TFSGitDownloader/blob/master/LICENSE"
+        },
+        "issues": {
+            "uri": "https://github.com/fakhrulhilal/TFSGitDownloader/issues"
+        }
+    },
+    "repository": {
+        "type": "git",
+        "uri": "https://github.com/fakhrulhilal/TFSGitDownloader.git"
+    }
 }

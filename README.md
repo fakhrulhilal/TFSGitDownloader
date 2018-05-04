@@ -1,6 +1,6 @@
 # Git Downloader
 
-This task will download git repository as an addition to default source. Consider this task as workaround where TFS build with git repository can only download 1 repository. Then this task will download another git repository required by your TFS build definition. This task assumes that git is already installed in %ProgramFiles%\\Git within TFS build agent's machine.
+This task will download git repository as an addition to default source. Consider this task as workaround where TFS build with git repository can only download 1 repository. Then this task will download another git repository required by your TFS build definition. This task assumes that git is already installed in PATH environment variable or %ProgramFiles%\\Git within TFS build agent's machine.
 
 ## Parameters
 

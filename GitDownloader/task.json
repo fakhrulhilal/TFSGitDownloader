@@ -3,7 +3,7 @@
     "name": "GitDownloader",
     "friendlyName": "Git Repository Downloader",
     "description": "Download additional git repository from public repository or this TFS",
-    "helpMarkDown": "This task will download git repository as an addition to default source. Consider this task as workaround where TFS build with git repository can only download 1 repository. This task assumes that git is already installed in %ProgramFiles%\\Git within TFS build agent's machine.",
+    "helpMarkDown": "[More information](https://github.com/fakhrulhilal/TFSGitDownloader/blob/master/README.md)",
     "category": "Utility",
     "visibility": [
         "Build",
@@ -14,7 +14,7 @@
     "version": {
         "Major": 0,
         "Minor": 2,
-        "Patch": 11
+        "Patch": 12
     },
     "instanceNameFormat": "Fetch git: $(Repository)",
     "groups": [
