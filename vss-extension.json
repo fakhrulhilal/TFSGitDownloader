@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "GitDownloader",
     "name": "Git Repository Downloader",
-    "version": "0.2.12",
+    "version": "0.2.15",
     "publisher": "fakhrulhilal-maktum",
     "targets": [
         {

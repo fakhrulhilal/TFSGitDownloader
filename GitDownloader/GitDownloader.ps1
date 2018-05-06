@@ -135,6 +135,16 @@ Function Get-GitRepositoryUri {
     Return $Uris -join '/'
 }
 
+Function Get-GitDirectory {
+	If (-not ([string]::IsNullOrWhiteSpace($Env:AGENT_BUILDDIRECTORY)) -and (Test-Path -Path $Env:AGENT_BUILDDIRECTORY -PathType Container)) {
+		$Directory = $Env:AGENT_BUILDDIRECTORY
+	} ElseIf (-not ([string]::IsNullOrWhiteSpace($Env:AGENT_RELEASEDIRECTORY)) -and (Test-Path $Env:AGENT_RELEASEDIRECTORY -PathType Container)) {
+		$Directory = $Env:AGENT_RELEASEDIRECTORY
+	}
+
+	Return ([System.IO.Path]::Combine($Directory, 'git'))
+}
+
 Function Test-SameTfsServer {
     param([string]$Uri)
     $DefaultUri = $Env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI
@@ -159,8 +169,7 @@ try {
 $GitRepositoryUri = Get-GitRepositoryUri
 Write-Host "##vso[task.setvariable variable=Build.Repository.GitUri]$GitRepositoryUri"
 $RepositoryUrl = $RepositoryUrl -replace ([regex]::Escape('$(Build.Repository.GitUri)')), $GitRepositoryUri
-$BuildDirectory = $Env:AGENT_BUILDDIRECTORY
-$GitDirectory = [System.IO.Path]::Combine($BuildDirectory, 'git')
+$GitDirectory = Get-GitDirectory
 Write-Host "##vso[task.setvariable variable=Build.GitDirectory]$GitDirectory"
 If ([string]::IsNullOrWhiteSpace($RepositoryPath)) {
     # set default repository path
