@@ -33,7 +33,7 @@
     },
     "files": [
         {
-            "path": "GitDownloader"
+            "path": "src"
         },
         {
             "path": "images",

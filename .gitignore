@@ -1,2 +1,5 @@
 .vs/
 *.vsix
+build/
+node_modules/
+package-lock.json
