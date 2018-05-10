@@ -1,28 +1,10 @@
-[CmdletBinding()]
-param(
-    # repository name
-    [string]
-    [parameter(mandatory=$true)]
-    $RepositoryUrl,
+Function Get-EnvironmentVariable {
+    param([string]$Name)
 
-    # the root directory to store all git repositories
-    [string]
-    [parameter(mandatory=$false)]
-    $RepositoryPath,
+    Return [Environment]::GetEnvironmentVariable($Name)
+}
 
-    # branch/tag name to checkout
-    [parameter(mandatory=$false)]
-    [string]
-    $BranchTag = 'master',
-
-    # determine whether to clean the folder before downloading the repository or not (default: false)
-    [parameter(mandatory=$false)]
-    [string]
-    [ValidateSet('true', 'false', 'yes', 'no')]
-    $Clean = 'false'
-)
-
-Function Get-CurrentBranch {
+Function Get-GitCurrentBranch {
     $branch = (git symbolic-ref -q --short HEAD)
     If (-not ([string]::IsNullOrEmpty($branch)) -and ($branch -ne 'HEAD')) {
         Return $branch
@@ -83,8 +65,11 @@ Function Update-GitRepository {
 
     Write-Host "Updating repository inside $Path"
     Set-Location $Path | Out-Null
-    $CurrentBranch = Get-CurrentBranch
-    Invoke-VerboseCommand -Command { git stash }
+    $CurrentBranch = Get-GitCurrentBranch
+    Invoke-VerboseCommand -Command { 
+        git add .
+        git stash 
+    }
     If ($CurrentBranch -ine $BranchTag) {
         Write-Host "Undoing any pending changes in $Path"
         Invoke-VerboseCommand -Command {
@@ -101,7 +86,8 @@ Function Update-GitRepository {
     Invoke-VerboseCommand -Command { git config credential.interactive never }
     # try to use token provided by TFS server
     If (Test-SameTfsServer -Uri $fetchUri) {
-        $AuthHeader = "Authorization: bearer $($Env:SYSTEM_ACCESSTOKEN)"
+        $SystemToken = Get-EnvironmentVariable -Name 'SYSTEM_ACCESSTOKEN'
+        $AuthHeader = "Authorization: bearer $SystemToken"
         Invoke-VerboseCommand -Command { git -c http.extraheader="$AuthHeader" pull origin $BranchTag }
     }
     Else {
@@ -109,7 +95,7 @@ Function Update-GitRepository {
     }
 }
 
-Function Start-CloneGitRepository {
+Function Invoke-GitCloneRepository {
     param(
         [string]$Uri,
         [string]$BranchTag,
@@ -119,7 +105,8 @@ Function Start-CloneGitRepository {
     Write-Host "Cloning $Uri for branch/tag '$BranchTag' into $Path"
     # try to embed authentication from system token for same TFS server
     If ((Test-SameTfsServer -Uri $Uri)) {
-        $AuthHeader = "Authorization: bearer $($Env:SYSTEM_ACCESSTOKEN)"
+        $SystemToken = Get-EnvironmentVariable -Name 'SYSTEM_ACCESSTOKEN'
+        $AuthHeader = "Authorization: bearer $SystemToken"
         Invoke-VerboseCommand -Command { git -c http.extraheader="$AuthHeader" clone --single-branch --progress -b $BranchTag "$Uri" "$Path" }
     }
     Else {
@@ -131,15 +118,19 @@ Function Start-CloneGitRepository {
 }
 
 Function Get-GitRepositoryUri {
-    $Uris =  @($Env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI, $Env:SYSTEM_TEAMPROJECT, '_git') | %{ $_.Trim('/') }
+    $VstsUri = Get-EnvironmentVariable -Name 'SYSTEM_TEAMFOUNDATIONCOLLECTIONURI'
+    $TeamProject = Get-EnvironmentVariable -Name 'SYSTEM_TEAMPROJECT'
+    $Uris =  @($VstsUri, $TeamProject, '_git') | %{ $_.Trim('/') }
     Return $Uris -join '/'
 }
 
 Function Get-GitDirectory {
-	If (-not ([string]::IsNullOrWhiteSpace($Env:AGENT_BUILDDIRECTORY)) -and (Test-Path -Path $Env:AGENT_BUILDDIRECTORY -PathType Container)) {
-		$Directory = $Env:AGENT_BUILDDIRECTORY
-	} ElseIf (-not ([string]::IsNullOrWhiteSpace($Env:AGENT_RELEASEDIRECTORY)) -and (Test-Path $Env:AGENT_RELEASEDIRECTORY -PathType Container)) {
-		$Directory = $Env:AGENT_RELEASEDIRECTORY
+    $AgentBuildDir = Get-EnvironmentVariable -Name 'AGENT_BUILDDIRECTORY'
+    $AgentReleaseDir = Get-EnvironmentVariable -Name 'AGENT_RELEASEDIRECTORY'
+	If (-not ([string]::IsNullOrWhiteSpace($AgentBuildDir)) -and (Test-Path -Path $AgentBuildDir -PathType Container)) {
+		$Directory = $AgentBuildDir
+	} ElseIf (-not ([string]::IsNullOrWhiteSpace($AgentReleaseDir)) -and (Test-Path $AgentReleaseDir -PathType Container)) {
+		$Directory = $AgentReleaseDir
 	}
 
 	Return ([System.IO.Path]::Combine($Directory, 'git'))
@@ -147,7 +138,7 @@ Function Get-GitDirectory {
 
 Function Test-SameTfsServer {
     param([string]$Uri)
-    $DefaultUri = $Env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI
+    $DefaultUri = Get-EnvironmentVariable -Name 'SYSTEM_TEAMFOUNDATIONCOLLECTIONURI'
     # we don't care the protocol, either http or https
     $DefaultUri = $DefaultUri -replace '^https?:', ''
     $Uri = $Uri -replace '^https?:', ''
@@ -155,49 +146,79 @@ Function Test-SameTfsServer {
     Return $Uri -match "^($($escapedPattern))"
 }
 
-try {
-    # try to find in PATH environment
-    Get-Command -Name git -CommandType Application -ErrorAction Stop | Out-Null
-} catch [System.Management.Automation.CommandNotFoundException] {
-    # try to find git in default location
-    If (-not (Test-Path -Path "$($env:ProgramFiles)\Git\bin\git.exe" -PathType Leaf)) {
-        Write-Error "Git command line not found or not installed" -ErrorAction Stop
+Function Save-GitRepository {
+    [CmdletBinding()]
+    param(
+        # repository name
+        [string]
+        [parameter(mandatory=$true)]
+        $RepositoryUrl,
+    
+        # the root directory to store all git repositories
+        [string]
+        [parameter(mandatory=$false)]
+        $RepositoryPath,
+    
+        # branch/tag name to checkout
+        [parameter(mandatory=$false)]
+        [string]
+        $BranchTag = 'master',
+    
+        # determine whether to clean the folder before downloading the repository or not (default: false)
+        [parameter(mandatory=$false)]
+        [string]
+        [ValidateSet('true', 'false', 'yes', 'no')]
+        $Clean = 'false'
+    )
+    try {
+        # try to find in PATH environment
+        Get-Command -Name git -CommandType Application -ErrorAction Stop | Out-Null
+    } catch [System.Management.Automation.CommandNotFoundException] {
+        # try to find git in default location
+        If (-not (Test-Path -Path "$($env:ProgramFiles)\Git\bin\git.exe" -PathType Leaf)) {
+            Write-Error "Git command line not found or not installed" -ErrorAction Stop
+        }
+        Set-Alias -Name git -Value $env:ProgramFiles\Git\bin\git.exe -Force | Out-Null
     }
-    Set-Alias -Name git -Value $env:ProgramFiles\Git\bin\git.exe -Force | Out-Null
-}
 
-$GitRepositoryUri = Get-GitRepositoryUri
-Write-Host "##vso[task.setvariable variable=Build.Repository.GitUri]$GitRepositoryUri"
-$RepositoryUrl = $RepositoryUrl -replace ([regex]::Escape('$(Build.Repository.GitUri)')), $GitRepositoryUri
-$GitDirectory = Get-GitDirectory
-Write-Host "##vso[task.setvariable variable=Build.GitDirectory]$GitDirectory"
-If ([string]::IsNullOrWhiteSpace($RepositoryPath)) {
-    # set default repository path
-    $RepositoryName = $RepositoryUrl.Substring($RepositoryUrl.TrimEnd('/').LastIndexOf('/') + 1)
-    $RepositoryPath = "`$(Build.GitDirectory)\$RepositoryName"
-}
-$RepositoryPath = $RepositoryPath -replace ([regex]::Escape('$(Build.GitDirectory)')), $GitDirectory
+    $GitRepositoryUri = Get-GitRepositoryUri
+    Write-Host "##vso[task.setvariable variable=Build.Repository.GitUri]$GitRepositoryUri"
+    $RepositoryUrl = $RepositoryUrl -replace ([regex]::Escape('$(Build.Repository.GitUri)')), $GitRepositoryUri
+    $GitDirectory = Get-GitDirectory
+    Write-Host "##vso[task.setvariable variable=Build.GitDirectory]$GitDirectory"
+    If ([string]::IsNullOrWhiteSpace($RepositoryPath)) {
+        $captured = [regex]::Match($RepositoryUrl, '^(\w+:)?(?<separator>/|\\){1,2}')
+        $Separator = '/'
+        If ($captured.Success) {
+            $Separator = $captured.Groups['separator'].Value[0]
+        }
+        # set default repository path
+        $RepositoryName = $RepositoryUrl.Substring($RepositoryUrl.TrimEnd($Separator).LastIndexOf($Separator) + 1)
+        $RepositoryPath = "`$(Build.GitDirectory)\$RepositoryName"
+    }
+    $RepositoryPath = $RepositoryPath -replace ([regex]::Escape('$(Build.GitDirectory)')), $GitDirectory
 
-# ensure containing git folder exists
-$RepositoryFolder = [System.IO.Path]::GetDirectoryName($RepositoryPath)
-If (-not (Test-Path -Path "$RepositoryFolder" -PathType Container)) {
-    Write-Host "Creating git directory: $RepositoryFolder"
-    New-Item -Path "$RepositoryFolder" -ItemType Directory -Force | Out-Null
-}
+    # ensure containing git folder exists
+    $RepositoryFolder = [System.IO.Path]::GetDirectoryName($RepositoryPath)
+    If (-not (Test-Path -Path "$RepositoryFolder" -PathType Container)) {
+        Write-Host "Creating git directory: $RepositoryFolder"
+        New-Item -Path "$RepositoryFolder" -ItemType Directory -Force | Out-Null
+    }
 
-$CurrentDirectory = (Get-Location).Path
-If (Test-Path -Path "$RepositoryPath" -PathType Container) {
-    If (@('true', 'yes').Contains($Clean.ToLower())) {
-        Write-Host "Cleaning directory $RepositoryPath"
-        Remove-Item -Path "$RepositoryPath" -Recurse -Force | Out-Null
-        Start-CloneGitRepository -Path "$RepositoryPath" -Uri "$RepositoryUrl" -BranchTag $BranchTag
+    $CurrentDirectory = (Get-Location).Path
+    If (Test-Path -Path "$RepositoryPath" -PathType Container) {
+        If (@('true', 'yes').Contains($Clean.ToLower())) {
+            Write-Host "Cleaning directory $RepositoryPath"
+            Remove-Item -Path "$RepositoryPath" -Recurse -Force | Out-Null
+            Invoke-GitCloneRepository -Path "$RepositoryPath" -Uri "$RepositoryUrl" -BranchTag $BranchTag
+        }
+        Else {
+            Update-GitRepository -Path "$RepositoryPath" -BranchTag $BranchTag
+        }
     }
     Else {
-        Update-GitRepository -Path "$RepositoryPath" -BranchTag $BranchTag
+        Invoke-GitCloneRepository -Path "$RepositoryPath" -Uri "$RepositoryUrl" -BranchTag $BranchTag
     }
-}
-Else {
-    Start-CloneGitRepository -Path "$RepositoryPath" -Uri "$RepositoryUrl" -BranchTag $BranchTag
-}
 
-Set-Location "$CurrentDirectory"
+    Set-Location "$CurrentDirectory"
+}

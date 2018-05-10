@@ -60,7 +60,7 @@
     ],
     "execution": {
         "Powershell": {
-            "target": "GitDownloader.ps1"
+            "target": "Save-GitRepository.ps1"
         }
     }
 }
