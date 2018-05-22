@@ -1,5 +1,9 @@
 # Git Downloader
 
+![build status](https://fakhrulhilal.visualstudio.com/_apis/public/build/definitions/550a8968-7ff6-4dbe-8e2a-f186fa7f2c26/5/badge)
+![VSTS marketplace](https://img.shields.io/vscode-marketplace/v/fakhrulhilal-maktum.GitDownloader.svg)
+![license](https://img.shields.io/github/license/fakhrulhilal/TFSGitDownloader.svg)
+
 This task will download git repository as an addition to default source. Consider this task as workaround where TFS build with git repository can only download 1 repository. Then this task will download another git repository required by your TFS build definition. This task assumes that git is already installed in PATH environment variable or %ProgramFiles%\\Git within TFS build agent's machine.
 
 ## Parameters
