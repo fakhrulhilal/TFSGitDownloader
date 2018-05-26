@@ -5,6 +5,7 @@
   "devDependencies": {
     "gulp": "^3.9.1",
     "gulp-hashsum": "^1.2.0",
+    "minimist": "^1.2.0",
     "run-sequence": "^2.2.1",
     "shelljs": "^0.8.2",
     "tfx-cli": "^0.5.10"
