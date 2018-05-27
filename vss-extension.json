@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "GitDownloader",
     "name": "Git Repository Downloader",
-    "version": "0.2.17",
+    "version": "0.3.2",
     "publisher": "fakhrulhilal-maktum",
     "targets": [
         {
@@ -33,7 +33,7 @@
     },
     "files": [
         {
-            "path": "src"
+            "path": "GitDownloader"
         },
         {
             "path": "images",

@@ -13,10 +13,10 @@
     "author": "Fakhrulhilal Maktum",
     "version": {
         "Major": 0,
-        "Minor": 2,
-        "Patch": 17
+        "Minor": 3,
+        "Patch": 2
     },
-    "instanceNameFormat": "Fetch git: $(Repository)",
+    "instanceNameFormat": "Fetch git: $(RepositoryUrl)",
     "groups": [
         {
             "name": "advanced",
