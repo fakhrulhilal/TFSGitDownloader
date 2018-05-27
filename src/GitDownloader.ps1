@@ -13,6 +13,12 @@ Function Get-GitCurrentBranch {
     Return $tag
 }
 
+Function Get-GitFetchUri {
+    $remoteUris = git remote -v
+    $match = [regex]::Match($remoteUris, '^(origin)\s(?<url>.+)\s\(fetch\)\W')
+    Return $match.Groups['url'].Value
+}
+
 Function Invoke-VerboseCommand {
     param(
         [ScriptBlock]$Command,
@@ -26,7 +32,7 @@ Function Invoke-VerboseCommand {
         $Value = Get-Variable -Name $Variable -ValueOnly
         $Script = $Script.Replace("`$$($Variable)", $Value)
     }
-    Write-Host $Script
+    Write-Host $Script.Trim()
     If ($script:ErrorActionPreference -ne $null) {
         $backupErrorActionPreference = $script:ErrorActionPreference
     } ElseIf ($ErrorActionPreference -ne $null) {
@@ -79,16 +85,13 @@ Function Update-GitRepository {
         }
     }
     # get current fetch uri
-    $remoteUris = git remote -v
-    $match = [regex]::Match($remoteUris, '^(origin)\s(?<url>.+)\s\(fetch\)\W')
-    $fetchUri = $match.Groups['url'].Value
+    $fetchUri = Get-GitFetchUri
     Write-Host "Pulling update from branch/tag $BranchTag"
     Invoke-VerboseCommand -Command { git config credential.interactive never }
     # try to use token provided by TFS server
     If (Test-SameTfsServer -Uri $fetchUri) {
         $SystemToken = Get-EnvironmentVariable -Name 'SYSTEM_ACCESSTOKEN'
-        $AuthHeader = "Authorization: bearer $SystemToken"
-        Invoke-VerboseCommand -Command { git -c http.extraheader="$AuthHeader" pull origin $BranchTag }
+        Invoke-VerboseCommand -Command { git -c http.extraheader="Authorization: bearer $SystemToken" pull origin $BranchTag }
     }
     Else {
         Invoke-VerboseCommand -Command { git pull origin $BranchTag }
@@ -106,8 +109,7 @@ Function Invoke-GitCloneRepository {
     # try to embed authentication from system token for same TFS server
     If ((Test-SameTfsServer -Uri $Uri)) {
         $SystemToken = Get-EnvironmentVariable -Name 'SYSTEM_ACCESSTOKEN'
-        $AuthHeader = "Authorization: bearer $SystemToken"
-        Invoke-VerboseCommand -Command { git -c http.extraheader="$AuthHeader" clone --single-branch --progress -b $BranchTag "$Uri" "$Path" }
+        Invoke-VerboseCommand -Command { git -c http.extraheader="Authorization: bearer $SystemToken" clone --single-branch --progress -b $BranchTag "$Uri" "$Path" }
     }
     Else {
         Invoke-VerboseCommand -Command { git clone --single-branch --progress -b $BranchTag "$Uri" "$Path" }

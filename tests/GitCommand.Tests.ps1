@@ -34,23 +34,42 @@ Describe 'Current branch/tag' {
 }
 
 Describe 'Git clone' {
-    Mock Invoke-VerboseCommand { Return $Command }
-    It 'Does not use token when not in same VSTS server' {
+	Function git () {}
+	Mock git { }
+	Mock Write-Host { }
+    It 'Does not use token when in same VSTS server' {
         Mock Test-SameTfsServer { return $false }
-
-        Invoke-GitCloneRepository -Uri 'http://dummy/repo.git' -BranchTag 'master' -Path TestDrive:\repo.git
-        Assert-MockCalled Invoke-VerboseCommand -ParameterFilter { $Command -eq { git clone --single-branch --progress -b master 'http://dummy/repo.git' TestDrive:\repo.git } }
-    }
-    It 'Uses token when in same VSTS server' {
-        Mock Test-SameTfsServer { return $true }
-        Mock Get-EnvironmentVariable { return 'token' } -ParameterFilter { $Path -eq 'SYSTEM_ACCESSTOKEN' }
  
         Invoke-GitCloneRepository -Uri 'http://dummy/repo.git' -BranchTag 'master' -Path TestDrive:\repo.git
-        Assert-MockCalled Invoke-VerboseCommand -ParameterFilter { $Command -eq { git -c http.extraheader="token" clone --single-branch --progress -b master 'http://dummy/repo.git' TestDrive:\repo.git } }
+		Assert-MockCalled git -ParameterFilter { 'clone --single-branch --progress -b master http://dummy/repo.git TestDrive:\repo.git' -eq $args }
+   }
+    It 'Uses token when in same VSTS server' {
+        Mock Test-SameTfsServer { return $true }
+        Mock Get-EnvironmentVariable { return 'token' } -ParameterFilter { $Name -eq 'SYSTEM_ACCESSTOKEN' }
+ 
+        Invoke-GitCloneRepository -Uri 'http://dummy/repo.git' -BranchTag 'master' -Path TestDrive:\repo.git
+		Assert-MockCalled git -ParameterFilter { '-c http.extraheader=Authorization: bearer token clone --single-branch --progress -b master http://dummy/repo.git TestDrive:\repo.git' -eq $args }
    }
 }
 
 Describe 'Git update repository' {
-    It 'Does not use token when not in same VSTS server' {}
-    It 'Uses token when in same VSTS server' {}
+	Function git () {}
+	Mock git { }
+	Mock Get-GitFetchUri { Return 'http://dummy/repo.git' }
+	Mock Get-GitCurrentBranch { Return 'master' }
+	Mock Set-Location { }
+	Mock Write-Host { }
+   	It 'Does not use token when not in same VSTS server' {
+		Mock Test-SameTfsServer { return $false }
+ 
+        Update-GitRepository -BranchTag 'master' -Path TestDrive:\repo.git
+		Assert-MockCalled git -ParameterFilter { 'pull origin master' -eq $args }
+	}
+    It 'Uses token when in same VSTS server' {
+		Mock Test-SameTfsServer { return $true }
+        Mock Get-EnvironmentVariable { return 'token' } -ParameterFilter { $Name -eq 'SYSTEM_ACCESSTOKEN' }
+ 
+        Update-GitRepository -BranchTag 'master' -Path TestDrive:\repo.git
+		Assert-MockCalled git -ParameterFilter { '-c http.extraheader=Authorization: bearer token pull origin master' -eq $args }
+	}
 }
