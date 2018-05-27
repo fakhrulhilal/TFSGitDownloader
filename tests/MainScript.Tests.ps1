@@ -1,4 +1,4 @@
-. "$PSScriptRoot\..\src\GitDownloader.ps1"
+. "$PSScriptRoot\..\GitDownloader\GitDownloader.ps1"
 
 Describe 'Save git repository' {
     If ((Get-Command -Name git -CommandType Application -ErrorAction Ignore) -eq $null) {

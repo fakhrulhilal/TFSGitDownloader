@@ -1,4 +1,4 @@
-. "$PSScriptRoot\..\src\GitDownloader.ps1"
+. "$PSScriptRoot\..\GitDownloader\GitDownloader.ps1"
 
 Describe 'Default git URI' {
     $FakeVstsUri = 'https://account.visualstudio.com/'
