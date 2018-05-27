@@ -1,7 +1,8 @@
 # Git Downloader
 
 ![build status](https://fakhrulhilal.visualstudio.com/_apis/public/build/definitions/550a8968-7ff6-4dbe-8e2a-f186fa7f2c26/5/badge)
-![VSTS marketplace](https://img.shields.io/vscode-marketplace/v/fakhrulhilal-maktum.GitDownloader.svg)
+![VSTS marketplace deployment status](https://rmsprodscussu1.vsrm.visualstudio.com/A3b3789fc-b814-434a-be5e-5144b7fc4b51/_apis/public/Release/badge/550a8968-7ff6-4dbe-8e2a-f186fa7f2c26/2/3)
+![VSTS marketplace version](https://img.shields.io/vscode-marketplace/v/fakhrulhilal-maktum.GitDownloader.svg)
 ![license](https://img.shields.io/github/license/fakhrulhilal/TFSGitDownloader.svg)
 
 This task will download git repository as an addition to default source. Consider this task as workaround where TFS build with git repository can only download 1 repository. Then this task will download another git repository required by your TFS build definition. This task assumes that git is already installed in PATH environment variable or %ProgramFiles%\\Git within TFS build agent's machine.
@@ -33,6 +34,17 @@ This task will download git repository as an addition to default source. Conside
 
 By default, this task expects public git repository that can be downloaded without authentication. But when the git repository is located in same TFS server, than it requires OAuth token for successful download. You can enable it in **Options** tab and check for **Allow scripts to access OAuth token** like screenshot below:
 ![enable OAuth token](images/enable_oauth_token.jpg "Options")
+
+For YAML build, we need to expose the token to environment variable manually (named **SYSTEM_ACCESSTOKEN**) as follows:
+
+```yml
+- task: fakhrulhilal-maktum.GitDownloader.git-downloader.GitDownloader@0
+  displayName: Build Scripts
+  inputs:
+    RepositoryUrl: '$(Build.Repository.GitUri)/repo'
+  env:
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+```
 
 The git URL is considered the same TFS server when it's located in the same URL as TFS server (ignoring HTTP protocol). Supposed we have TFS public URL http://yourdomain/, so these URLs are considered the same TFS server:
 
