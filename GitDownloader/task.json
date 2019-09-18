@@ -13,8 +13,8 @@
     "author": "Fakhrulhilal Maktum",
     "version": {
         "Major": 0,
-        "Minor": 3,
-        "Patch": 3
+        "Minor": 4,
+        "Patch": 0
     },
     "instanceNameFormat": "Fetch git: $(RepositoryUrl)",
     "groups": [
@@ -59,7 +59,7 @@
         }
     ],
     "execution": {
-        "Powershell": {
+        "Powershell3": {
             "target": "Save-GitRepository.ps1"
         }
     }

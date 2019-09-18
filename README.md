@@ -66,3 +66,13 @@ https://docs.microsoft.com/en-us/vsts/build-release/concepts/definitions/build/v
 ```PowerShell
 Write-Host "$Env:SYSTEM_TEAMFOUNDATIONCOLLECTIONURI"
 ```
+
+# Requirements
+
+## Pipeline Agent
+
+This plugin uses new [Powershell3](https://github.com/microsoft/azure-pipelines-task-lib/blob/master/node/docs/minagent.md#user-content-task-execution-handler) handler that requires at least pipeline agent version 1.95.1.
+
+## Azure DevOps Server
+
+As of [Powershell3](https://github.com/microsoft/azure-pipelines-task-lib/blob/master/node/docs/minagent.md#user-content-task-execution-handler) handler, this plugin requires at least TFS 2015 Update 2. 
