@@ -14,9 +14,10 @@
     "version": {
         "Major": 0,
         "Minor": 4,
-        "Patch": 0
+        "Patch": 7
     },
-    "instanceNameFormat": "Fetch git: $(RepositoryUrl)",
+	"instanceNameFormat": "Fetch git: $(RepositoryUrl)",
+	"minimumAgentVersion": "1.95.1",
     "groups": [
         {
             "name": "advanced",

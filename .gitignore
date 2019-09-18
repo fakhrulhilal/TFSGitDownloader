@@ -3,4 +3,5 @@
 *.vsix
 build/
 node_modules/
+ps_modules/
 package-lock.json

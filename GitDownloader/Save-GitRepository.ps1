@@ -1,27 +1,19 @@
 [CmdletBinding()]
-param(
-    # repository name
-    [string]
-    [parameter(mandatory=$true)]
-    $RepositoryUrl,
+param()
 
-    # the root directory to store all git repositories
-    [string]
-    [parameter(mandatory=$false)]
-    $RepositoryPath,
+Trace-VstsEnteringInvocation $MyInvocation
+try {
+	# get the inputs
+	[string]$RepositoryUrl = Get-VstsInput -Name RepositoryUrl
+	[string]$RepositoryPath = Get-VstsInput -Name RepositoryPath
+	[string]$BranchTag = Get-VstsInput -Name BranchTag
+	[bool]$Clean = Get-VstsInput -Name Clean -AsBool
+	
+	# import the helpers
+	. "$PSScriptRoot\GitDownloader.ps1"
 
-    # branch/tag name to checkout
-    [parameter(mandatory=$false)]
-    [string]
-    $BranchTag = 'master',
-
-    # determine whether to clean the folder before downloading the repository or not (default: false)
-    [parameter(mandatory=$false)]
-    [string]
-    [ValidateSet('true', 'false', 'yes', 'no')]
-    $Clean = 'false'
-)
-
-. "$PSScriptRoot\GitDownloader.ps1"
-
-Save-GitRepository -RepositoryUrl $RepositoryUrl -RepositoryPath $RepositoryPath -BranchTag $BranchTag -Clean $Clean
+	Save-GitRepository -RepositoryUrl $RepositoryUrl -RepositoryPath $RepositoryPath -BranchTag $BranchTag -Clean $Clean
+}
+finally {
+	Trace-VstsLeavingInvocation $MyInvocation
+}
